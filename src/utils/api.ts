@@ -25,11 +25,6 @@ function getFromDate(dateRange: CrimeFilters['dateRange']): Date | null {
   }
 }
 
-/** YYYY-MM-DD 形式に変換 */
-function toISODate(d: Date): string {
-  return d.toISOString().split('T')[0]
-}
-
 // ─── 正規化関数 ───────────────────────────────────────────────────────────────
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

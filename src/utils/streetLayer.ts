@@ -14,9 +14,7 @@ export interface StreetSegment {
 // aveBearing: bearing for avenue-type streets (runs N-S-ish)
 // stBearing: bearing for street-type roads (runs E-W-ish, perpendicular)
 const CITY_GRID: Partial<Record<CityId, { aveBearing: number; stBearing: number }>> = {
-  seattle:    { aveBearing: 332, stBearing:  62 }, // downtown grid ~28° off true north
-  newyork:    { aveBearing:  29, stBearing: 119 }, // Manhattan grid
-  losangeles: { aveBearing:   0, stBearing:  90 }, // mostly cardinal
+  seattle: { aveBearing: 332, stBearing: 62 }, // downtown grid ~28° off true north
 }
 
 function estimateOrientation(blockAddress: string): 'ave' | 'st' {

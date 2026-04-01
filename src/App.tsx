@@ -32,7 +32,7 @@ export default function App() {
 
   // ── City & data ─────────────────────────────────────────────────────────────
   const [city] = useState('seattle' as const)
-  const [filters, setFilters] = useState<CrimeFilters>(DEFAULT_FILTERS)
+  const [filters] = useState<CrimeFilters>(DEFAULT_FILTERS)
 
   const { data, loading, error } = useCrimeData(city, filters)
 
