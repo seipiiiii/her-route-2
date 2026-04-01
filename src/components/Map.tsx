@@ -1,56 +1,39 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { GoogleMap, OverlayView } from '@react-google-maps/api'
+import { MarkerClusterer } from '@googlemaps/markerclusterer'
 import type { CrimeRecord, CityId } from '../types/crime'
 import type { RouteScore } from '../utils/routeScore'
 import { CITIES } from '../utils/cityConfig'
 import { computeStreetSegments, snapSegmentsToRoads, STREET_STYLES } from '../utils/streetLayer'
 import type { StreetSegment } from '../utils/streetLayer'
 
-// デフォルトのGoogle Mapsスタイル（白背景・ライトテーマ）を使用
 const MAP_STYLES: google.maps.MapTypeStyle[] = []
+
+// ─── Marker color per offense ─────────────────────────────────────────────────
 
 function getMarkerColor(offenseGroup: string): string {
   const group = offenseGroup?.toLowerCase() || ''
   if (group.includes('assault') || group.includes('homicide')) return '#ef4444'
-  if (group.includes('robbery') || group.includes('weapon')) return '#f97316'
+  if (group.includes('robbery') || group.includes('weapon'))   return '#f97316'
   if (group.includes('burglary') || group.includes('motor vehicle')) return '#eab308'
-  if (group.includes('larceny') || group.includes('theft')) return '#3b82f6'
-  if (group.includes('drug')) return '#a855f7'
-  if (group.includes('sex')) return '#ec4899'
+  if (group.includes('larceny') || group.includes('theft'))    return '#3b82f6'
+  if (group.includes('drug'))  return '#a855f7'
+  if (group.includes('sex'))   return '#ec4899'
   return '#64748b'
 }
 
-interface MarkerProps {
-  crime: CrimeRecord
-  onClick: (crime: CrimeRecord) => void
-  isSelected: boolean
+function makeMarkerIcon(color: string, selected: boolean): google.maps.Symbol {
+  return {
+    path: google.maps.SymbolPath.CIRCLE,
+    scale: selected ? 8 : 5,
+    fillColor: color,
+    fillOpacity: 0.92,
+    strokeColor: selected ? '#ffffff' : `${color}88`,
+    strokeWeight: selected ? 2 : 1,
+  }
 }
 
-function CrimeMarker({ crime, onClick, isSelected }: MarkerProps) {
-  const color = getMarkerColor(crime.offense_sub_category)
-  return (
-    <OverlayView
-      position={{ lat: parseFloat(crime.latitude), lng: parseFloat(crime.longitude) }}
-      mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-    >
-      <div
-        onClick={() => onClick(crime)}
-        style={{
-          width: isSelected ? 14 : 8,
-          height: isSelected ? 14 : 8,
-          borderRadius: '50%',
-          backgroundColor: color,
-          border: isSelected ? `2px solid white` : `1px solid ${color}99`,
-          boxShadow: isSelected ? `0 0 12px ${color}` : `0 0 4px ${color}88`,
-          cursor: 'pointer',
-          transform: 'translate(-50%, -50%)',
-          transition: 'all 0.15s ease',
-        }}
-        title={crime.nibrs_offense_code_description}
-      />
-    </OverlayView>
-  )
-}
+// ─── Props ────────────────────────────────────────────────────────────────────
 
 interface Props {
   isLoaded: boolean
@@ -71,6 +54,8 @@ interface Props {
   showPins?: boolean
 }
 
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export function Map({
   isLoaded, loadError,
   city,
@@ -80,27 +65,37 @@ export function Map({
   showHeatmap = false,
   showPins = true,
 }: Props) {
-  const mapRef = useRef<google.maps.Map | null>(null)
-  const polylineRefs = useRef<google.maps.Polyline[]>([])
-  const streetPolylineRefs = useRef<google.maps.Polyline[]>([])
-  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null)
-  const heatmapRef = useRef<google.maps.visualization.HeatmapLayer | null>(null)
-  const onPoiClickRef = useRef(onPoiClick)
-  const [zoom, setZoom] = useState(12)
+  const mapRef              = useRef<google.maps.Map | null>(null)
+  const polylineRefs        = useRef<google.maps.Polyline[]>([])
+  const streetPolylineRefs  = useRef<google.maps.Polyline[]>([])
+  const infoWindowRef       = useRef<google.maps.InfoWindow | null>(null)
+  const heatmapRef          = useRef<google.maps.visualization.HeatmapLayer | null>(null)
+
+  // ── Marker cluster refs ────────────────────────────────────────────────────
+  const clustererRef        = useRef<MarkerClusterer | null>(null)
+  const nativeMarkersRef    = useRef<Map<string, google.maps.Marker>>(new Map())
+
+  // ── Stable callback refs (avoid stale closures in listeners) ──────────────
+  const onPoiClickRef       = useRef(onPoiClick)
+  const onSelectCrimeRef    = useRef(onSelectCrime)
+  const selectedCrimeRef    = useRef(selectedCrime)
+  useEffect(() => { onPoiClickRef.current    = onPoiClick    }, [onPoiClick])
+  useEffect(() => { onSelectCrimeRef.current = onSelectCrime }, [onSelectCrime])
+  useEffect(() => { selectedCrimeRef.current = selectedCrime }, [selectedCrime])
+
+  const [zoom,   setZoom]   = useState(12)
+  const [bounds, setBounds] = useState<google.maps.LatLngBounds | null>(null)
   const [snappedSegments, setSnappedSegments] = useState<StreetSegment[] | null>(null)
 
   const cityInfo = CITIES[city]
 
-  // Keep onPoiClick ref fresh to avoid stale closures
-  useEffect(() => { onPoiClickRef.current = onPoiClick }, [onPoiClick])
-
+  // ── Map load ────────────────────────────────────────────────────────────────
   const onLoad = useCallback((map: google.maps.Map) => {
     mapRef.current = map
 
-    // POI click listener — intercept place clicks to show bookmark sheet
+    // POI click listener
     map.addListener('click', (e: google.maps.MapMouseEvent & { placeId?: string }) => {
       if (e.placeId && onPoiClickRef.current) {
-        // Stop the default Google Maps info window from opening
         e.stop?.()
         const service = new google.maps.places.PlacesService(map)
         service.getDetails(
@@ -108,11 +103,11 @@ export function Map({
           (place, status) => {
             if (status === google.maps.places.PlacesServiceStatus.OK && place && onPoiClickRef.current) {
               onPoiClickRef.current({
-                name: place.name || '',
+                name:    place.name || '',
                 address: place.formatted_address || '',
                 placeId: e.placeId!,
-                lat: place.geometry?.location?.lat() ?? 0,
-                lng: place.geometry?.location?.lng() ?? 0,
+                lat:     place.geometry?.location?.lat() ?? 0,
+                lng:     place.geometry?.location?.lng() ?? 0,
               })
             }
           },
@@ -121,73 +116,70 @@ export function Map({
     })
   }, [])
 
-  // 都市切り替え時にマップを移動
+  // ── City change ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (mapRef.current) {
       mapRef.current.panTo(cityInfo.center)
       mapRef.current.setZoom(cityInfo.defaultZoom)
-      setZoom(cityInfo.defaultZoom)
     }
   }, [city, cityInfo.center, cityInfo.defaultZoom])
 
-  const onZoomChanged = useCallback(() => {
-    if (mapRef.current) {
-      setZoom(mapRef.current.getZoom() || 12)
-    }
+  // ── onIdle: capture zoom + bounds after pan/zoom settles ───────────────────
+  // Using onIdle instead of onZoomChanged/onBoundsChanged to reduce update frequency
+  const onIdle = useCallback(() => {
+    if (!mapRef.current) return
+    setZoom(mapRef.current.getZoom() ?? 12)
+    setBounds(mapRef.current.getBounds() ?? null)
   }, [])
 
+  // ── Map click (pin mode) ───────────────────────────────────────────────────
   const handleMapClick = useCallback((e: google.maps.MapMouseEvent) => {
     if (pinMode !== 'none' && e.latLng && onMapClick) {
       onMapClick({ lat: e.latLng.lat(), lng: e.latLng.lng() })
     }
   }, [pinMode, onMapClick])
 
-  // ルートをポリラインで描画
+  // ── Routes ─────────────────────────────────────────────────────────────────
   useEffect(() => {
-    // 既存ポリラインを削除
     polylineRefs.current.forEach((p) => p.setMap(null))
     polylineRefs.current = []
     if (!isLoaded || !mapRef.current || routes.length === 0) return
 
     routes.forEach((route, index) => {
-      const score = routeScores.find((s) => s.index === index)
+      const score     = routeScores.find((s) => s.index === index)
       const isSelected = index === selectedRouteIndex
-      const color = score?.color ?? '#94a3b8'
-      const path = google.maps.geometry?.encoding?.decodePath(route.overview_polyline)
+      const color     = score?.color ?? '#94a3b8'
+      const path      = google.maps.geometry?.encoding?.decodePath(route.overview_polyline)
         ?? route.overview_path
 
       const polyline = new google.maps.Polyline({
         path,
         geodesic: true,
-        strokeColor: color,
+        strokeColor:   color,
         strokeOpacity: isSelected ? 0.9 : 0.35,
-        strokeWeight: isSelected ? 6 : 3,
+        strokeWeight:  isSelected ? 6   : 3,
         map: mapRef.current!,
         zIndex: isSelected ? 10 : 1,
       })
       polylineRefs.current.push(polyline)
     })
 
-    // 選択中ルートにフィット
     const selected = routes[selectedRouteIndex]
     if (selected && mapRef.current) {
-      const bounds = new google.maps.LatLngBounds()
+      const b = new google.maps.LatLngBounds()
       selected.legs.forEach((leg) => {
-        bounds.extend(leg.start_location)
-        bounds.extend(leg.end_location)
+        b.extend(leg.start_location)
+        b.extend(leg.end_location)
       })
-      mapRef.current.fitBounds(bounds, 80)
+      mapRef.current.fitBounds(b, 80)
     }
 
-    return () => {
-      polylineRefs.current.forEach((p) => p.setMap(null))
-    }
+    return () => { polylineRefs.current.forEach((p) => p.setMap(null)) }
   }, [isLoaded, routes, routeScores, selectedRouteIndex])
 
-  // ストリートカラーリング（ズーム14以上で表示）
+  // ── Street coloring (zoom ≥ 14, heatmap ON) ───────────────────────────────
   const streetSegments = useMemo(() => computeStreetSegments(data, 30, city), [data, city])
 
-  // Roads API でセグメントを道路にスナップ（非同期・都市/データが変わったとき1回）
   useEffect(() => {
     setSnappedSegments(null)
     if (streetSegments.length === 0) return
@@ -196,18 +188,14 @@ export function Map({
 
     const controller = new AbortController()
     snapSegmentsToRoads(streetSegments, apiKey, city, controller.signal)
-      .then((snapped) => {
-        if (!controller.signal.aborted) setSnappedSegments(snapped)
-      })
-      .catch(() => { /* fallback to heuristic */ })
-
+      .then((snapped) => { if (!controller.signal.aborted) setSnappedSegments(snapped) })
+      .catch(() => {})
     return () => controller.abort()
   }, [streetSegments, city])
 
   const displaySegments = snappedSegments ?? streetSegments
 
   useEffect(() => {
-    // 既存のストリートポリラインを削除
     streetPolylineRefs.current.forEach((p) => p.setMap(null))
     streetPolylineRefs.current = []
     infoWindowRef.current?.close()
@@ -222,34 +210,22 @@ export function Map({
 
     for (const seg of displaySegments) {
       const style = STREET_STYLES[seg.dangerLevel]
-
-      const polylineOptions: google.maps.PolylineOptions = {
+      const opts: google.maps.PolylineOptions = {
         path: seg.path,
         geodesic: true,
-        strokeColor: style.color,
+        strokeColor:   style.color,
         strokeOpacity: style.dashed ? 0 : style.opacity,
-        strokeWeight: style.weight,
+        strokeWeight:  style.weight,
         map: mapRef.current!,
         zIndex: seg.dangerLevel === 'high' ? 10 : seg.dangerLevel === 'medium' ? 9 : 8,
       }
-
       if (style.dashed) {
-        polylineOptions.icons = [
-          {
-            icon: {
-              path: 'M 0,-1 0,1',
-              strokeOpacity: style.opacity,
-              strokeColor: style.color,
-              scale: style.weight,
-            },
-            offset: '0',
-            repeat: '12px',
-          },
-        ]
+        opts.icons = [{
+          icon: { path: 'M 0,-1 0,1', strokeOpacity: style.opacity, strokeColor: style.color, scale: style.weight },
+          offset: '0', repeat: '12px',
+        }]
       }
-
-      const polyline = new google.maps.Polyline(polylineOptions)
-
+      const polyline = new google.maps.Polyline(opts)
       polyline.addListener('mouseover', (e: google.maps.MapMouseEvent) => {
         if (!e.latLng) return
         infoWindow.setContent(
@@ -266,11 +242,7 @@ export function Map({
         infoWindow.setPosition(e.latLng)
         infoWindow.open(mapRef.current!)
       })
-
-      polyline.addListener('mouseout', () => {
-        infoWindow.close()
-      })
-
+      polyline.addListener('mouseout', () => infoWindow.close())
       streetPolylineRefs.current.push(polyline)
     }
 
@@ -281,15 +253,13 @@ export function Map({
     }
   }, [isLoaded, zoom, showHeatmap, displaySegments])
 
-  // ヒートマップ
+  // ── Heatmap ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!isLoaded || !mapRef.current) return
-
     if (showHeatmap) {
       const points = data
         .map((r) => {
-          const lat = parseFloat(r.latitude)
-          const lng = parseFloat(r.longitude)
+          const lat = parseFloat(r.latitude), lng = parseFloat(r.longitude)
           if (isNaN(lat) || isNaN(lng)) return null
           return new google.maps.LatLng(lat, lng)
         })
@@ -297,18 +267,10 @@ export function Map({
 
       if (!heatmapRef.current) {
         heatmapRef.current = new google.maps.visualization.HeatmapLayer({
-          data: points,
-          map: mapRef.current,
-          radius: 30,
-          opacity: 0.7,
+          data: points, map: mapRef.current, radius: 30, opacity: 0.7,
           gradient: [
-            'rgba(0,0,255,0)',
-            'rgba(0,100,255,0.5)',
-            'rgba(0,200,200,0.7)',
-            'rgba(0,255,100,0.8)',
-            'rgba(255,255,0,0.9)',
-            'rgba(255,100,0,1)',
-            'rgba(255,0,0,1)',
+            'rgba(0,0,255,0)', 'rgba(0,100,255,0.5)', 'rgba(0,200,200,0.7)',
+            'rgba(0,255,100,0.8)', 'rgba(255,255,0,0.9)', 'rgba(255,100,0,1)', 'rgba(255,0,0,1)',
           ],
         })
       } else {
@@ -318,12 +280,111 @@ export function Map({
     } else {
       heatmapRef.current?.setMap(null)
     }
-
-    return () => {
-      heatmapRef.current?.setMap(null)
-    }
+    return () => { heatmapRef.current?.setMap(null) }
   }, [isLoaded, showHeatmap, data])
 
+  // ── Native markers + MarkerClusterer ──────────────────────────────────────
+  // Filter to viewport bounds and hide at zoom 14-16 (street lines take over)
+  const viewportData = useMemo(() => {
+    if (!showPins || !bounds) return []
+    if (zoom >= 14 && zoom < 17) return []   // street lines visible, hide dots
+    return data.filter((r) => {
+      const lat = parseFloat(r.latitude)
+      const lng = parseFloat(r.longitude)
+      if (isNaN(lat) || isNaN(lng)) return false
+      return bounds.contains({ lat, lng })
+    })
+  }, [data, bounds, showPins, zoom])
+
+  useEffect(() => {
+    if (!isLoaded || !mapRef.current) return
+
+    // Clear previous markers and clusterer
+    clustererRef.current?.clearMarkers()
+    nativeMarkersRef.current.forEach((m) => m.setMap(null))
+    nativeMarkersRef.current.clear()
+
+    if (viewportData.length === 0) return
+
+    const markers: google.maps.Marker[] = []
+    const selectedId = selectedCrimeRef.current?.offense_id
+
+    viewportData.forEach((crime) => {
+      const lat = parseFloat(crime.latitude)
+      const lng = parseFloat(crime.longitude)
+      if (isNaN(lat) || isNaN(lng)) return
+
+      const color    = getMarkerColor(crime.offense_sub_category)
+      const selected = crime.offense_id === selectedId
+      const marker   = new google.maps.Marker({
+        position: { lat, lng },
+        icon: makeMarkerIcon(color, selected),
+        title: crime.nibrs_offense_code_description,
+        optimized: true,
+      })
+      marker.addListener('click', () => onSelectCrimeRef.current(crime))
+      nativeMarkersRef.current.set(crime.offense_id, marker)
+      markers.push(marker)
+    })
+
+    // Custom cluster renderer using brand color
+    const renderer = {
+      render({ count, position }: { count: number; position: google.maps.LatLng }) {
+        const size = count > 100 ? 44 : count > 20 ? 36 : 28
+        return new google.maps.Marker({
+          position,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale:       size / 2,
+            fillColor:   '#1D6B4F',
+            fillOpacity: 0.88,
+            strokeColor: '#ffffff',
+            strokeWeight: 2,
+          },
+          label: {
+            text:       count > 999 ? '999+' : String(count),
+            color:      '#ffffff',
+            fontSize:   count > 99 ? '10px' : '11px',
+            fontWeight: 'bold',
+          },
+          zIndex: 1000 + count,
+        })
+      },
+    }
+
+    if (!clustererRef.current) {
+      clustererRef.current = new MarkerClusterer({
+        map: mapRef.current!,
+        markers,
+        renderer,
+      })
+    } else {
+      clustererRef.current.addMarkers(markers)
+    }
+
+    return () => {
+      clustererRef.current?.clearMarkers()
+      nativeMarkersRef.current.forEach((m) => m.setMap(null))
+      nativeMarkersRef.current.clear()
+    }
+  }, [isLoaded, viewportData])
+
+  // Update selected marker icon without rebuilding all markers
+  useEffect(() => {
+    nativeMarkersRef.current.forEach((marker, id) => {
+      // Recover crime to get color — iterate viewportData
+      // We stored title on marker; faster to keep a data map via closure
+      // Simple approach: iterate and match by position key
+      const isSelected = id === selectedCrime?.offense_id
+      const currentIcon = marker.getIcon() as google.maps.Symbol | undefined
+      if (!currentIcon) return
+      const color = (currentIcon.fillColor as string) ?? '#64748b'
+      marker.setIcon(makeMarkerIcon(color, isSelected))
+      if (isSelected) marker.setZIndex(999)
+    })
+  }, [selectedCrime])
+
+  // ── Error / loading ─────────────────────────────────────────────────────────
   if (loadError) {
     return (
       <div className="flex-1 flex items-center justify-center bg-slate-900 text-white">
@@ -346,16 +407,6 @@ export function Map({
     )
   }
 
-  // ズームレベルに応じてマーカー表示を制御
-  // zoom < 11: 間引き表示, zoom 14-16: ストリートライン表示のためドット非表示, zoom >= 17: 再表示
-  const visibleData = !showPins
-    ? []
-    : zoom >= 14 && zoom < 17
-    ? []
-    : zoom < 11
-    ? data.filter((_, i) => i % 3 === 0)
-    : data
-
   return (
     <div className={`flex-1 h-full relative ${pinMode !== 'none' ? 'cursor-crosshair' : ''}`}>
       <GoogleMap
@@ -363,7 +414,7 @@ export function Map({
         center={cityInfo.center}
         zoom={cityInfo.defaultZoom}
         onLoad={onLoad}
-        onZoomChanged={onZoomChanged}
+        onIdle={onIdle}
         onClick={handleMapClick}
         options={{
           styles: MAP_STYLES,
@@ -375,22 +426,11 @@ export function Map({
           draggableCursor: pinMode !== 'none' ? 'crosshair' : undefined,
         }}
       >
-        {visibleData.map((crime) => (
-          <CrimeMarker
-            key={crime.offense_id}
-            crime={crime}
-            onClick={onSelectCrime}
-            isSelected={selectedCrime?.offense_id === crime.offense_id}
-          />
-        ))}
-
         {/* 出発地ピン */}
         {originCoords && (
           <OverlayView position={originCoords} mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}>
             <div style={{ transform: 'translate(-50%, -100%)' }} className="flex flex-col items-center">
-              <div className="bg-brand-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg whitespace-nowrap">
-                出発地
-              </div>
+              <div className="bg-brand-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg whitespace-nowrap">出発地</div>
               <div style={{ width: 0, height: 0, borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderTop: '10px solid #1D6B4F' }} />
             </div>
           </OverlayView>
@@ -400,15 +440,12 @@ export function Map({
         {destCoords && (
           <OverlayView position={destCoords} mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}>
             <div style={{ transform: 'translate(-50%, -100%)' }} className="flex flex-col items-center">
-              <div className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg whitespace-nowrap">
-                目的地
-              </div>
+              <div className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg whitespace-nowrap">目的地</div>
               <div style={{ width: 0, height: 0, borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderTop: '10px solid #ef4444' }} />
             </div>
           </OverlayView>
         )}
       </GoogleMap>
-
     </div>
   )
 }

@@ -54,7 +54,7 @@ function normalizeSeattle(raw: any): CrimeRecord {
 export async function fetchCrimeData(
   city: CityId,
   filters: CrimeFilters,
-  limit = 5000,
+  limit = 2000,
 ): Promise<CrimeRecord[]> {
   const fromDate = getFromDate(filters.dateRange)
   const { bounds } = CITIES[city]
