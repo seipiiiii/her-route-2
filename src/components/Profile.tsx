@@ -1,247 +1,211 @@
 import { useState } from 'react'
 
-// ─── Icons ────────────────────────────────────────────────────────────────────
+// ─── Toggle (iOS style) ───────────────────────────────────────────────────────
 
-const ShieldIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-  </svg>
-)
+function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      onClick={() => onChange(!value)}
+      className={`relative w-[51px] h-[31px] rounded-full transition-colors duration-200 focus:outline-none flex-shrink-0 ${
+        value ? 'bg-green-500' : 'bg-gray-300'
+      }`}
+    >
+      <span
+        className={`absolute top-[2px] left-[2px] w-[27px] h-[27px] bg-white rounded-full shadow-md transition-transform duration-200 ${
+          value ? 'translate-x-5' : 'translate-x-0'
+        }`}
+      />
+    </button>
+  )
+}
 
-const MailIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-    <polyline points="22,6 12,13 2,6"/>
-  </svg>
-)
+// ─── Row types ────────────────────────────────────────────────────────────────
 
-const PinIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-    <circle cx="12" cy="10" r="3"/>
-  </svg>
-)
-
-const LogoutIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-    <polyline points="16 17 21 12 16 7"/>
-    <line x1="21" y1="12" x2="9" y2="12"/>
-  </svg>
-)
-
-const CalendarIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-    <line x1="16" y1="2" x2="16" y2="6"/>
-    <line x1="8" y1="2" x2="8" y2="6"/>
-    <line x1="3" y1="10" x2="21" y2="10"/>
-  </svg>
-)
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function Section({
+function ArrowRow({
   icon,
-  title,
-  children,
+  label,
+  onPress,
 }: {
-  icon?: React.ReactNode
-  title: string
-  children: React.ReactNode
+  icon: React.ReactNode
+  label: string
+  onPress?: () => void
 }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-      <div className="flex items-center gap-2.5 px-6 py-4 border-b border-gray-100">
-        {icon && <span className="text-green-500">{icon}</span>}
-        <h3 className="text-gray-900 font-semibold text-[15px]">{title}</h3>
+    <button
+      onClick={onPress}
+      className="flex items-center px-4 py-3.5 w-full hover:bg-gray-50 active:bg-gray-100 transition-colors"
+    >
+      <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white mr-3 flex-shrink-0" style={{ background: 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)' }}>
+        {icon}
       </div>
-      <div className="px-6 py-5">{children}</div>
+      <span className="flex-1 text-left text-gray-900 text-[15px]">{label}</span>
+      <svg
+        width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300"
+      >
+        <polyline points="9 18 15 12 9 6" />
+      </svg>
+    </button>
+  )
+}
+
+function ToggleRow({
+  icon,
+  iconBg,
+  label,
+  value,
+  onChange,
+}: {
+  icon: React.ReactNode
+  iconBg?: string
+  label: string
+  value: boolean
+  onChange: (v: boolean) => void
+}) {
+  return (
+    <div className="flex items-center px-4 py-3.5">
+      <div
+        className="w-7 h-7 rounded-lg flex items-center justify-center text-white mr-3 flex-shrink-0"
+        style={{ background: iconBg ?? 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)' }}
+      >
+        {icon}
+      </div>
+      <span className="flex-1 text-gray-900 text-[15px]">{label}</span>
+      <Toggle value={value} onChange={onChange} />
     </div>
   )
 }
 
-function SecurityRow({
+// ─── Section ─────────────────────────────────────────────────────────────────
+
+function SettingsSection({
   label,
-  description,
-  buttonLabel,
-  last = false,
+  children,
 }: {
   label: string
-  description: string
-  buttonLabel: string
-  last?: boolean
+  children: React.ReactNode
 }) {
   return (
-    <>
-      <div className="flex items-center justify-between py-4">
-        <div>
-          <p className="text-gray-900 text-sm font-medium">{label}</p>
-          <p className="text-gray-400 text-xs mt-0.5">{description}</p>
-        </div>
-        <button className="px-4 py-1.5 border border-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-50 transition-colors">
-          {buttonLabel}
-        </button>
+    <div className="mb-6">
+      <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-4 mb-2">
+        {label}
+      </p>
+      <div className="bg-white rounded-2xl overflow-hidden divide-y divide-gray-100 shadow-sm">
+        {children}
       </div>
-      {!last && <hr className="border-gray-100" />}
-    </>
+    </div>
   )
 }
 
-const inputStyle =
-  'w-full bg-gray-100 border-0 text-gray-800 text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-300 transition-all'
+// ─── SVG shorthand ───────────────────────────────────────────────────────────
+
+const Svg = ({ d, ...rest }: { d: string; [k: string]: unknown }) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...rest}>
+    <path d={d} />
+  </svg>
+)
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function ProfilePage() {
-  const [firstName, setFirstName] = useState('花子')
-  const [lastName, setLastName] = useState('田中')
-  const [email] = useState('tanaka.hanako@example.com')
-  const [location, setLocation] = useState('東京都渋谷区')
-  const [saved, setSaved] = useState(false)
-
-  const handleSave = () => {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
-  }
+  const [highContrast, setHighContrast] = useState(false)
+  const [darkMode, setDarkMode]         = useState(false)
 
   return (
-    <div className="flex-1 bg-gray-50 overflow-y-auto">
-      <div className="px-10 py-8 max-w-3xl">
-        {/* Page header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">プロフィール</h1>
-          <p className="text-gray-500 text-sm">アカウント情報とセキュリティ設定</p>
+    <div className="flex flex-col h-full bg-gray-100 overflow-y-auto">
+      {/* ── Navigation title ── */}
+      <div className="px-4 pt-14 pb-4">
+        <h1 className="text-[28px] font-bold text-gray-900 text-center">プロフィール</h1>
+      </div>
+
+      {/* ── User card ── */}
+      <div className="bg-white mx-4 rounded-2xl p-5 mb-6 flex flex-col items-center shadow-sm">
+        <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center mb-3">
+          <svg
+            width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"
+          >
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
         </div>
+        <p className="text-lg font-bold text-gray-900">Yuki Tanaka</p>
+        <p className="text-sm text-gray-400 mt-0.5">yuki.tanaka@example.com</p>
+      </div>
 
-        <div className="space-y-5">
-          {/* User card */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-6">
-            <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
-                <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-              </div>
-              <div>
-                <p className="text-gray-900 text-xl font-bold">{lastName} {firstName}</p>
-                <p className="text-gray-500 text-sm mt-0.5">{email}</p>
-                <span className="inline-block mt-2 px-3 py-0.5 bg-green-50 border border-green-200 text-green-700 text-xs font-medium rounded-full">
-                  プレミアム会員
-                </span>
-              </div>
-            </div>
-            <div className="mt-5">
-              <button className="px-4 py-2 border border-gray-200 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors">
-                プロフィール写真を変更
-              </button>
-            </div>
-          </div>
+      {/* ── Settings sections ── */}
+      <div className="px-4 pb-8">
+        {/* 安全設定 */}
+        <SettingsSection label="安全設定">
+          <ArrowRow
+            icon={<Svg d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />}
+            label="保存済みルート"
+          />
+          <ArrowRow
+            icon={
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" fill="white" />
+              </svg>
+            }
+            label="ブックマーク地点"
+          />
+          <ArrowRow
+            icon={
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+            }
+            label="通知設定"
+          />
+        </SettingsSection>
 
-          {/* 個人情報 */}
-          <Section title="個人情報">
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1.5 font-medium">名</label>
-                  <input
-                    type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    className={inputStyle}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1.5 font-medium">姓</label>
-                  <input
-                    type="text"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    className={inputStyle}
-                  />
-                </div>
-              </div>
+        {/* 表示設定 */}
+        <SettingsSection label="表示設定">
+          <ToggleRow
+            icon={
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+              </svg>
+            }
+            iconBg="linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
+            label="ハイコントラストモード"
+            value={highContrast}
+            onChange={setHighContrast}
+          />
+          <ToggleRow
+            icon={<Svg d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />}
+            iconBg="linear-gradient(135deg, #6366f1 0%, #4338ca 100%)"
+            label="ダークモード"
+            value={darkMode}
+            onChange={setDarkMode}
+          />
+        </SettingsSection>
 
-              <div>
-                <label className="block text-xs text-gray-500 mb-1.5 font-medium">メールアドレス</label>
-                <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">
-                    <MailIcon />
-                  </span>
-                  <input
-                    type="email"
-                    value={email}
-                    readOnly
-                    className={`${inputStyle} pl-9 text-gray-400 cursor-default`}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs text-gray-500 mb-1.5 font-medium">主な活動地域</label>
-                <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">
-                    <PinIcon />
-                  </span>
-                  <input
-                    type="text"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    className={`${inputStyle} pl-9`}
-                  />
-                </div>
-              </div>
-
-              <div className="pt-1">
-                <button
-                  onClick={handleSave}
-                  className="px-6 py-2.5 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
-                >
-                  {saved ? '保存しました ✓' : '変更を保存'}
-                </button>
-              </div>
-            </div>
-          </Section>
-
-          {/* アカウント統計 */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-6">
-            <h3 className="text-gray-900 font-semibold text-[15px] mb-5">アカウント統計</h3>
-            <div className="grid grid-cols-4 gap-4 mb-5">
-              {[
-                { value: '12', label: '保存ビュー' },
-                { value: '48', label: 'ルート検索' },
-                { value: '156', label: 'ログイン日数' },
-                { value: '3.2', label: '平均安全スコア' },
-              ].map(({ value, label }) => (
-                <div key={label} className="text-center p-3 bg-gray-50 rounded-xl">
-                  <p className="text-gray-900 text-2xl font-bold tabular-nums">{value}</p>
-                  <p className="text-gray-500 text-xs mt-1">{label}</p>
-                </div>
-              ))}
-            </div>
-            <div className="flex items-center gap-2 text-gray-400 text-xs">
-              <CalendarIcon />
-              <span>アカウント作成日: <span className="text-green-600 font-medium">2025年10月15日</span></span>
-            </div>
-          </div>
-
-          {/* セキュリティ */}
-          <Section icon={<ShieldIcon />} title="セキュリティ">
-            <SecurityRow label="パスワード" description="最終更新: 2026年2月10日" buttonLabel="変更" />
-            <SecurityRow label="二段階認証" description="セキュリティを強化します" buttonLabel="設定" />
-            <SecurityRow label="ログインセッション" description="3つのデバイスでログイン中" buttonLabel="管理" last />
-          </Section>
-
-          {/* 危険な操作 */}
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-6">
-            <h3 className="text-red-700 font-semibold text-[15px] mb-4">危険な操作</h3>
-            <button className="w-full flex items-center justify-center gap-2.5 py-3 border border-red-200 text-red-600 text-sm font-medium rounded-xl hover:bg-red-100 transition-colors">
-              <LogoutIcon />
-              すべてのデバイスからログアウト
-            </button>
-          </div>
-        </div>
+        {/* その他 */}
+        <SettingsSection label="その他">
+          <ArrowRow
+            icon={
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            }
+            label="ヘルプ"
+          />
+          <ArrowRow
+            icon={
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+            }
+            label="利用規約"
+          />
+        </SettingsSection>
       </div>
     </div>
   )

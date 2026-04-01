@@ -6,23 +6,8 @@ import { CITIES } from '../utils/cityConfig'
 import { computeStreetSegments, snapSegmentsToRoads, STREET_STYLES } from '../utils/streetLayer'
 import type { StreetSegment } from '../utils/streetLayer'
 
-const MAP_STYLES: google.maps.MapTypeStyle[] = [
-  { elementType: 'geometry', stylers: [{ color: '#0f172a' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#0f172a' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#94a3b8' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#1e3a5f' }] },
-  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#1e293b' }] },
-  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#93aac3' }] },
-  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#1d4ed8' }] },
-  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#1e3a8a' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0c1a2e' }] },
-  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#3d6e8c' }] },
-  { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#1e293b' }] },
-  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#0f2a1e' }] },
-  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#1e2d4a' }] },
-  { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#2563eb' }] },
-  { featureType: 'administrative.land_parcel', elementType: 'labels.text.fill', stylers: [{ color: '#4e6da1' }] },
-]
+// デフォルトのGoogle Mapsスタイル（白背景・ライトテーマ）を使用
+const MAP_STYLES: google.maps.MapTypeStyle[] = []
 
 function getMarkerColor(offenseGroup: string): string {
   const group = offenseGroup?.toLowerCase() || ''
@@ -81,7 +66,9 @@ interface Props {
   originCoords?: google.maps.LatLngLiteral | null
   destCoords?: google.maps.LatLngLiteral | null
   onMapClick?: (coords: google.maps.LatLngLiteral) => void
+  onPoiClick?: (info: { name: string; address: string; placeId: string; lat: number; lng: number }) => void
   showHeatmap?: boolean
+  showPins?: boolean
 }
 
 export function Map({
@@ -89,21 +76,49 @@ export function Map({
   city,
   data, selectedCrime, onSelectCrime,
   routes = [], routeScores = [], selectedRouteIndex = 0,
-  pinMode = 'none', originCoords, destCoords, onMapClick,
+  pinMode = 'none', originCoords, destCoords, onMapClick, onPoiClick,
   showHeatmap = false,
+  showPins = true,
 }: Props) {
   const mapRef = useRef<google.maps.Map | null>(null)
   const polylineRefs = useRef<google.maps.Polyline[]>([])
   const streetPolylineRefs = useRef<google.maps.Polyline[]>([])
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null)
   const heatmapRef = useRef<google.maps.visualization.HeatmapLayer | null>(null)
+  const onPoiClickRef = useRef(onPoiClick)
   const [zoom, setZoom] = useState(12)
   const [snappedSegments, setSnappedSegments] = useState<StreetSegment[] | null>(null)
 
   const cityInfo = CITIES[city]
 
+  // Keep onPoiClick ref fresh to avoid stale closures
+  useEffect(() => { onPoiClickRef.current = onPoiClick }, [onPoiClick])
+
   const onLoad = useCallback((map: google.maps.Map) => {
     mapRef.current = map
+
+    // POI click listener — intercept place clicks to show bookmark sheet
+    map.addListener('click', (e: google.maps.MapMouseEvent & { placeId?: string }) => {
+      if (e.placeId && onPoiClickRef.current) {
+        // Stop the default Google Maps info window from opening
+        e.stop?.()
+        const service = new google.maps.places.PlacesService(map)
+        service.getDetails(
+          { placeId: e.placeId, fields: ['name', 'formatted_address', 'geometry'] },
+          (place, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && place && onPoiClickRef.current) {
+              onPoiClickRef.current({
+                name: place.name || '',
+                address: place.formatted_address || '',
+                placeId: e.placeId!,
+                lat: place.geometry?.location?.lat() ?? 0,
+                lng: place.geometry?.location?.lng() ?? 0,
+              })
+            }
+          },
+        )
+      }
+    })
   }, [])
 
   // 都市切り替え時にマップを移動
@@ -197,7 +212,7 @@ export function Map({
     streetPolylineRefs.current = []
     infoWindowRef.current?.close()
 
-    if (!isLoaded || !mapRef.current || zoom < 14) return
+    if (!isLoaded || !mapRef.current || !showHeatmap || zoom < 14) return
 
     const infoWindow = infoWindowRef.current ?? (() => {
       const iw = new google.maps.InfoWindow({ disableAutoPan: true })
@@ -264,7 +279,7 @@ export function Map({
       streetPolylineRefs.current = []
       infoWindowRef.current?.close()
     }
-  }, [isLoaded, zoom, displaySegments])
+  }, [isLoaded, zoom, showHeatmap, displaySegments])
 
   // ヒートマップ
   useEffect(() => {
@@ -333,7 +348,9 @@ export function Map({
 
   // ズームレベルに応じてマーカー表示を制御
   // zoom < 11: 間引き表示, zoom 14-16: ストリートライン表示のためドット非表示, zoom >= 17: 再表示
-  const visibleData = zoom >= 14 && zoom < 17
+  const visibleData = !showPins
+    ? []
+    : zoom >= 14 && zoom < 17
     ? []
     : zoom < 11
     ? data.filter((_, i) => i % 3 === 0)
@@ -351,10 +368,10 @@ export function Map({
         options={{
           styles: MAP_STYLES,
           disableDefaultUI: false,
-          zoomControl: true,
+          zoomControl: false,
           mapTypeControl: false,
           streetViewControl: false,
-          fullscreenControl: true,
+          fullscreenControl: false,
           draggableCursor: pinMode !== 'none' ? 'crosshair' : undefined,
         }}
       >
@@ -392,48 +409,6 @@ export function Map({
         )}
       </GoogleMap>
 
-      {/* 凡例 */}
-      <div className="absolute bottom-8 left-4 bg-white/95 backdrop-blur border border-gray-200 rounded-xl p-3 text-xs shadow-sm">
-        {zoom >= 14 ? (
-          <>
-            <p className="text-gray-600 font-semibold mb-2">危険度</p>
-            <div className="flex items-center gap-3">
-              {(
-                [
-                  { label: '高', color: '#EF4444' },
-                  { label: '中', color: '#F97316' },
-                  { label: '注意', color: '#FBBF24' },
-                ] as { label: string; color: string }[]
-              ).map(({ label, color }) => (
-                <div key={label} className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
-                  <span className="text-gray-600">{label}</span>
-                </div>
-              ))}
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="text-gray-600 font-semibold mb-2">凡例</p>
-            <div className="space-y-1.5">
-              {[
-                { label: '暴行・殺人', color: '#ef4444' },
-                { label: '強盗・武器', color: '#f97316' },
-                { label: '窃盗・盗難', color: '#eab308' },
-                { label: '財産犯罪', color: '#3b82f6' },
-                { label: '薬物', color: '#a855f7' },
-                { label: '性犯罪', color: '#ec4899' },
-                { label: 'その他', color: '#94a3b8' },
-              ].map(({ label, color }) => (
-                <div key={label} className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
-                  <span className="text-gray-600">{label}</span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
     </div>
   )
 }

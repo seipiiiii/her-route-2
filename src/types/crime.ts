@@ -42,6 +42,16 @@ export const OFFENSE_GROUPS = [
 
 export const PRECINCTS = ['ALL', 'North', 'East', 'South', 'Southwest', 'West']
 
+export interface BookmarkItem {
+  id: string
+  name: string
+  address: string
+  placeId: string
+  lat: number
+  lng: number
+  addedAt: string  // ISO date string
+}
+
 export const DATE_RANGE_LABELS: Record<CrimeFilters['dateRange'], string> = {
   today: '今日',
   week: '過去7日間',
