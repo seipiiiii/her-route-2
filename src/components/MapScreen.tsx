@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { Map } from './Map'
 import { RoutePanel } from './RoutePanel'
 import type { CrimeRecord, CityId, BookmarkItem } from '../types/crime'
@@ -289,6 +289,21 @@ export function MapScreen({
   const [dayNight,   setDayNight]   = useState<'all' | 'day' | 'night'>('all')
   const [selectedPlace, setSelectedPlace] = useState<PlaceInfo | null>(null)
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set())
+  const [sheetExpanded, setSheetExpanded] = useState(false)
+
+  // ── Swipe handling for bottom sheet ──────────────────────────────────────────
+  const touchStartY = useRef<number | null>(null)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY
+  }
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY.current === null) return
+    const delta = touchStartY.current - e.changedTouches[0].clientY
+    if (delta > 30) setSheetExpanded(true)
+    if (delta < -30) setSheetExpanded(false)
+    touchStartY.current = null
+  }
 
   // ── Client-side chip + day/night filter ──────────────────────────────────────
   const displayData = useMemo(() => {
@@ -339,7 +354,7 @@ export function MapScreen({
   const dayNightLabel =
     dayNight === 'night' ? '🌙 夜間' :
     dayNight === 'day'   ? '☀️ 昼間' :
-                           '⏱ 全時間'
+                           '⏱ 終日'
 
   const dayNightClass =
     dayNight === 'night' ? 'bg-indigo-500 text-white' :
@@ -371,7 +386,7 @@ export function MapScreen({
 
       {/* ── Top toolbar ── */}
       <div className="absolute top-0 left-0 right-0 z-20 pointer-events-none">
-        <div className="pointer-events-auto px-3 pt-12 pb-0">
+        <div className="pointer-events-auto px-3 pt-4 pb-0">
 
           {/* 検索バー行（ロゴ + 検索バー + ヒートマップ + ピン表示） */}
           <div className="flex items-center gap-2 mb-2">
@@ -491,38 +506,63 @@ export function MapScreen({
             bookmarked={bookmarkedIds.has(selectedPlace.placeId)}
           />
         ) : (
-          /* インシデントシート */
-          <div className="bg-white rounded-t-[28px] shadow-[0_-4px_24px_rgba(0,0,0,0.08)] px-5 pt-3 pb-5">
-            <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-3" />
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-gray-900 font-bold text-[15px]">付近のインシデント</p>
-              <span className="text-gray-400 text-sm font-medium">{recentIncidents.length}件</span>
-            </div>
-            {recentIncidents.length > 0 ? (
-              <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
-                {recentIncidents.map((incident) => {
-                  const color = incidentColor(incident)
-                  const label = incidentLabel(incident)
-                  return (
-                    <button
-                      key={incident.offense_id}
-                      onClick={() => onSelectCrime(incident)}
-                      className="flex-shrink-0 w-40 bg-gray-50 rounded-2xl p-3.5 text-left border border-gray-100 active:bg-gray-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                        <p className="text-gray-900 text-xs font-semibold leading-tight truncate">{label}</p>
-                      </div>
-                      <p className="text-gray-400 text-[11px] ml-4">{timeAgo(incident.report_date_time)}</p>
-                    </button>
-                  )
-                })}
+          /* インシデントシート（スワイプ展開） */
+          <div
+            className="bg-white rounded-t-[28px] shadow-[0_-4px_24px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out"
+            style={{ maxHeight: sheetExpanded ? '60vh' : '110px', overflow: 'hidden' }}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            {/* ドラッグハンドル + ヘッダー（常に表示） */}
+            <div
+              className="px-5 pt-3 pb-0 cursor-pointer select-none"
+              onClick={() => setSheetExpanded((v) => !v)}
+            >
+              <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-3" />
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-gray-900 font-bold text-[15px]">付近のインシデント</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400 text-sm font-medium">{recentIncidents.length}件</span>
+                  <svg
+                    width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    className={`text-gray-300 transition-transform duration-300 ${sheetExpanded ? 'rotate-180' : ''}`}
+                  >
+                    <polyline points="18 15 12 9 6 15" />
+                  </svg>
+                </div>
               </div>
-            ) : (
-              <p className="text-gray-400 text-sm text-center py-2">
-                {loading ? '読み込み中...' : 'インシデントなし'}
-              </p>
-            )}
+            </div>
+
+            {/* 展開時のみ表示するコンテンツ */}
+            <div className="px-5 pb-5 overflow-y-auto" style={{ maxHeight: 'calc(60vh - 80px)' }}>
+              {recentIncidents.length > 0 ? (
+                <div className="flex flex-col gap-2.5">
+                  {recentIncidents.map((incident) => {
+                    const color = incidentColor(incident)
+                    const label = incidentLabel(incident)
+                    return (
+                      <button
+                        key={incident.offense_id}
+                        onClick={() => onSelectCrime(incident)}
+                        className="w-full bg-gray-50 rounded-2xl p-4 text-left border border-gray-100 active:bg-gray-100 transition-colors flex items-center gap-3"
+                      >
+                        <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-gray-900 text-sm font-semibold leading-tight truncate">{label}</p>
+                          <p className="text-gray-400 text-xs mt-0.5 truncate">{incident.block_address || incident.neighborhood || ''}</p>
+                        </div>
+                        <span className="text-gray-400 text-xs flex-shrink-0">{timeAgo(incident.report_date_time)}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : (
+                <p className="text-gray-400 text-sm text-center py-4">
+                  {loading ? '読み込み中...' : 'インシデントなし'}
+                </p>
+              )}
+            </div>
           </div>
         )}
       </div>
