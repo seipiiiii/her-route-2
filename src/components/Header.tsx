@@ -15,7 +15,7 @@ export function Header({ city, onCityChange, dataCount, loading, onRefetch, last
     <header className="flex items-center h-14 px-4 bg-white border-b border-gray-200 gap-3 flex-shrink-0 z-10">
       {/* Logo */}
       <div className="flex items-center gap-2.5 flex-shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center shadow-sm">
+        <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center shadow-sm">
           <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
           </svg>
@@ -54,7 +54,7 @@ export function Header({ city, onCityChange, dataCount, loading, onRefetch, last
           <input
             type="text"
             placeholder="住所・地域名で検索..."
-            className="w-full h-9 pl-9 pr-4 bg-gray-100 text-gray-800 text-sm rounded-xl border border-transparent focus:outline-none focus:border-green-400 focus:bg-white transition-all placeholder-gray-400"
+            className="w-full h-9 pl-9 pr-4 bg-gray-100 text-gray-800 text-sm rounded-xl border border-transparent focus:outline-none focus:border-brand-400 focus:bg-white transition-all placeholder-gray-400"
           />
         </div>
       </div>
@@ -68,7 +68,7 @@ export function Header({ city, onCityChange, dataCount, loading, onRefetch, last
         )}
         <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-1.5">
           {loading ? (
-            <div className="w-3.5 h-3.5 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-3.5 h-3.5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
           ) : (
             <span className="text-xs font-semibold text-gray-700 tabular-nums">
               {dataCount.toLocaleString()}
@@ -78,7 +78,7 @@ export function Header({ city, onCityChange, dataCount, loading, onRefetch, last
           <button
             onClick={onRefetch}
             disabled={loading}
-            className="ml-1 text-gray-400 hover:text-green-600 disabled:opacity-40 transition-colors"
+            className="ml-1 text-gray-400 hover:text-brand-600 disabled:opacity-40 transition-colors"
             title="データを更新"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

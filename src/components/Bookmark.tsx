@@ -73,7 +73,7 @@ export function BookmarkScreen({ bookmarks, onRemove }: Props) {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`flex-1 py-3 text-sm font-semibold transition-colors ${
-                  active ? 'text-green-500 border-b-2 border-green-500' : 'text-gray-400'
+                  active ? 'text-brand-500 border-b-2 border-brand-500' : 'text-gray-400'
                 }`}
               >
                 {label}
@@ -102,7 +102,7 @@ export function BookmarkScreen({ bookmarks, onRemove }: Props) {
                   className="bg-white rounded-2xl px-4 py-4 flex items-center gap-3 shadow-sm"
                 >
                   {/* Icon */}
-                  <div className="w-11 h-11 rounded-xl bg-green-50 text-green-500 flex items-center justify-center flex-shrink-0">
+                  <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-500 flex items-center justify-center flex-shrink-0">
                     <LocationPinIcon />
                   </div>
 

@@ -388,10 +388,10 @@ export function Map({
         {originCoords && (
           <OverlayView position={originCoords} mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}>
             <div style={{ transform: 'translate(-50%, -100%)' }} className="flex flex-col items-center">
-              <div className="bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg whitespace-nowrap">
+              <div className="bg-brand-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg whitespace-nowrap">
                 出発地
               </div>
-              <div style={{ width: 0, height: 0, borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderTop: '10px solid #22c55e' }} />
+              <div style={{ width: 0, height: 0, borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderTop: '10px solid #1D6B4F' }} />
             </div>
           </OverlayView>
         )}

@@ -67,12 +67,12 @@ export function NavBar({
             onClick={() => onTabChange(tab.id)}
             className="flex flex-col items-center gap-1 px-4 flex-1 transition-all active:scale-95"
           >
-            <span className={`transition-colors ${active ? 'text-green-500' : 'text-gray-400'}`}>
+            <span className={`transition-colors ${active ? 'text-brand-500' : 'text-gray-400'}`}>
               {tab.icon(active)}
             </span>
             <span
               className={`text-[10px] font-semibold leading-tight transition-colors ${
-                active ? 'text-green-500' : 'text-gray-400'
+                active ? 'text-brand-500' : 'text-gray-400'
               }`}
             >
               {tab.label}

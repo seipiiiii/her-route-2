@@ -25,7 +25,7 @@ export function CrimeDetail({ crime, onClose }: Props) {
     >
       <div className="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
         {/* Accent top bar */}
-        <div className="h-[3px] bg-gradient-to-r from-green-400 via-emerald-500 to-green-400" />
+        <div className="h-[3px] bg-gradient-to-r from-brand-400 via-brand-500 to-brand-400" />
 
         {/* Header */}
         <div className="px-6 pt-5 pb-4 border-b border-gray-100">
@@ -34,7 +34,7 @@ export function CrimeDetail({ crime, onClose }: Props) {
               <h2 className="text-gray-900 font-semibold text-[15px] leading-snug tracking-tight">
                 {crime.nibrs_offense_code_description}
               </h2>
-              <span className="inline-block mt-1.5 px-2 py-0.5 bg-green-50 border border-green-200 text-green-700 text-[11px] rounded-md font-medium">
+              <span className="inline-block mt-1.5 px-2 py-0.5 bg-brand-50 border border-brand-200 text-brand-700 text-[11px] rounded-md font-medium">
                 {crime.offense_sub_category}
               </span>
             </div>
@@ -67,7 +67,7 @@ export function CrimeDetail({ crime, onClose }: Props) {
         <div className="px-6 pb-5">
           <button
             onClick={onClose}
-            className="w-full py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-xl text-sm font-medium transition-colors shadow-sm"
+            className="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-sm font-medium transition-colors shadow-sm"
           >
             閉じる
           </button>

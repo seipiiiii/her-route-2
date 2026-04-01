@@ -138,12 +138,12 @@ export function RoutePanel({
   }
 
   const inputClass =
-    'w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-3 py-2.5 text-xs placeholder-gray-400 focus:outline-none focus:border-green-400 focus:ring-1 focus:ring-green-100 focus:bg-white transition-all'
+    'w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-3 py-2.5 text-xs placeholder-gray-400 focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-100 focus:bg-white transition-all'
 
   const pinBtnClass = (active: boolean) =>
     `w-9 h-9 flex items-center justify-center rounded-xl text-sm flex-shrink-0 transition-all border ${
       active
-        ? 'bg-green-500 text-white border-green-400 shadow-sm'
+        ? 'bg-brand-500 text-white border-brand-400 shadow-sm'
         : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600 border-gray-200'
     }`
 
@@ -224,7 +224,7 @@ export function RoutePanel({
           <button
             onClick={handleSearch}
             disabled={loading}
-            className="flex-1 py-2.5 bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-xs font-semibold transition-colors shadow-sm"
+            className="flex-1 py-2.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-xs font-semibold transition-colors shadow-sm"
           >
             {loading ? '検索中...' : 'ルートを検索'}
           </button>

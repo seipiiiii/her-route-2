@@ -7,7 +7,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
     <button
       onClick={() => onChange(!value)}
       className={`relative w-[51px] h-[31px] rounded-full transition-colors duration-200 focus:outline-none flex-shrink-0 ${
-        value ? 'bg-green-500' : 'bg-gray-300'
+        value ? 'bg-brand-500' : 'bg-gray-300'
       }`}
     >
       <span

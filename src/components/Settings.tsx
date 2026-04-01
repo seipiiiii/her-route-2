@@ -47,7 +47,7 @@ function ToggleRow({
 }
 
 const selectStyle =
-  'w-full bg-gray-100 border-0 text-gray-800 text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-300 transition-all cursor-pointer'
+  'w-full bg-gray-100 border-0 text-gray-800 text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-300 transition-all cursor-pointer'
 
 function Section({
   icon,
@@ -61,7 +61,7 @@ function Section({
   return (
     <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
       <div className="flex items-center gap-2.5 px-6 py-4 border-b border-gray-100">
-        <span className="text-green-500">{icon}</span>
+        <span className="text-brand-500">{icon}</span>
         <h3 className="text-gray-900 font-semibold text-[15px]">{title}</h3>
       </div>
       <div className="px-6">{children}</div>
@@ -128,7 +128,7 @@ export function SettingsPage() {
         {/* Page header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <span className="text-green-500"><GearIcon /></span>
+            <span className="text-brand-500"><GearIcon /></span>
             <h1 className="text-2xl font-bold text-gray-900">設定</h1>
           </div>
           <p className="text-gray-500 text-sm">アプリケーションの動作とアクセシビリティをカスタマイズ</p>

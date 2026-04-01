@@ -354,7 +354,7 @@ function PlaceCardSheet({ place, onClose, onAddBookmark, bookmarked }: PlaceCard
     <div className="bg-white rounded-t-[28px] shadow-[0_-4px_24px_rgba(0,0,0,0.12)] px-5 pt-3 pb-6">
       <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4" />
       <div className="flex items-start gap-3">
-        <div className="w-11 h-11 rounded-xl bg-green-50 text-green-500 flex items-center justify-center flex-shrink-0">
+        <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-500 flex items-center justify-center flex-shrink-0">
           <LocationPinIcon />
         </div>
         <div className="flex-1 min-w-0">
@@ -375,7 +375,7 @@ function PlaceCardSheet({ place, onClose, onAddBookmark, bookmarked }: PlaceCard
             onClose()
           }}
           className={`w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold transition-all active:scale-95 ${
-            bookmarked ? 'bg-gray-100 text-gray-400' : 'bg-green-500 text-white shadow-sm'
+            bookmarked ? 'bg-gray-100 text-gray-400' : 'bg-brand-500 text-white shadow-sm'
           }`}
         >
           <BookmarkPlusIcon />
@@ -494,7 +494,7 @@ export function MapScreen({
             >
               <SearchIcon />
               <span className="text-gray-400 text-sm flex-1 text-left">目的地・場所を検索...</span>
-              {loading && <div className="w-3.5 h-3.5 border-2 border-green-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />}
+              {loading && <div className="w-3.5 h-3.5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />}
             </button>
 
             {/* ヒートマップ */}
@@ -524,7 +524,7 @@ export function MapScreen({
                   onClick={() => setActiveChip(chip.id)}
                   className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-all active:scale-95 border ${
                     active
-                      ? 'bg-green-600 text-white border-green-600 shadow-sm'
+                      ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
                       : 'bg-white text-gray-600 border-gray-200'
                   }`}
                 >
@@ -539,7 +539,7 @@ export function MapScreen({
               onClick={() => setDayNight((d) => (d === 'all' ? 'day' : d === 'day' ? 'night' : 'all'))}
               className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-all active:scale-95 border ${
                 dayNightActive
-                  ? 'bg-green-600 text-white border-green-600 shadow-sm'
+                  ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
                   : 'bg-white text-gray-600 border-gray-200'
               }`}
             >
@@ -551,8 +551,8 @@ export function MapScreen({
 
       {/* ── ピンモードヒント ── */}
       {pinMode !== 'none' && (
-        <div className="absolute top-40 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-white border border-green-300 text-gray-800 px-4 py-2.5 rounded-2xl text-xs font-medium shadow-lg whitespace-nowrap">
-          <span className="text-green-500">📍</span>
+        <div className="absolute top-40 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-white border border-brand-300 text-gray-800 px-4 py-2.5 rounded-2xl text-xs font-medium shadow-lg whitespace-nowrap">
+          <span className="text-brand-500">📍</span>
           <span>{pinMode === 'origin' ? '出発地' : '目的地'}を地図上でタップ</span>
           <button onClick={() => onPinModeChange('none')} className="ml-1 w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 text-gray-400">✕</button>
         </div>
