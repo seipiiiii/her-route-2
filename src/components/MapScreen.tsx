@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { Map } from './Map'
 import { RoutePanel } from './RoutePanel'
 import type { CrimeRecord, CityId, BookmarkItem } from '../types/crime'

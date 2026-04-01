@@ -6,18 +6,12 @@ import { ProfilePage } from './components/Profile'
 import { NavBar, type TabId } from './components/NavBar'
 import { CrimeDetail } from './components/CrimeDetail'
 import { useCrimeData } from './hooks/useCrimeData'
-import type { CrimeFilters, CrimeRecord, CityId, BookmarkItem } from './types/crime'
+import type { CrimeFilters, CrimeRecord, BookmarkItem } from './types/crime'
 import type { RouteScore } from './utils/routeScore'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const LIBRARIES: ('places' | 'visualization')[] = ['places', 'visualization']
-
-const CITY_DEFAULT_DATE_RANGE: Record<CityId, CrimeFilters['dateRange']> = {
-  seattle:    'month',
-  losangeles: 'all',
-  newyork:    'all',
-}
 
 const DEFAULT_FILTERS: CrimeFilters = {
   offenseGroup: 'ALL',
@@ -37,15 +31,10 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>('map')
 
   // ── City & data ─────────────────────────────────────────────────────────────
-  const [city, setCity]       = useState<CityId>('seattle')
+  const [city] = useState('seattle' as const)
   const [filters, setFilters] = useState<CrimeFilters>(DEFAULT_FILTERS)
 
   const { data, loading, error } = useCrimeData(city, filters)
-
-  const handleCityChange = (newCity: CityId) => {
-    setCity(newCity)
-    setFilters({ ...DEFAULT_FILTERS, dateRange: CITY_DEFAULT_DATE_RANGE[newCity] })
-  }
 
   // ── Crime selection ──────────────────────────────────────────────────────────
   const [selectedCrime, setSelectedCrime] = useState<CrimeRecord | null>(null)

@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { RoutePanel } from './RoutePanel'
-import type { NavItem } from './NavBar'
+import type { TabId } from './NavBar'
 import type { CrimeRecord, CrimeFilters, CityId } from '../types/crime'
 import { DATE_RANGE_LABELS } from '../types/crime'
 import type { RouteScore } from '../utils/routeScore'
 import { useFBIStats } from '../hooks/useFBIStats'
 
 interface Props {
-  activeNav: NavItem
+  activeNav: TabId
   onClose: () => void
   city: CityId
   // Data
@@ -37,7 +37,7 @@ interface Props {
   onHeatmapToggle: () => void
 }
 
-const PANEL_TITLES: Record<NavItem, string> = {
+const PANEL_TITLES: Record<TabId, string> = {
   map: '概要',
   route: 'ルート探索',
   incidents: 'インシデント',

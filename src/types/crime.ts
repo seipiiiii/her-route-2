@@ -1,4 +1,4 @@
-export type CityId = 'seattle' | 'losangeles' | 'newyork'
+export type CityId = 'seattle'
 
 export interface CrimeRecord {
   offense_id: string
