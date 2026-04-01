@@ -73,7 +73,7 @@ export function Map({
 
   // ── Marker cluster refs ────────────────────────────────────────────────────
   const clustererRef        = useRef<MarkerClusterer | null>(null)
-  const nativeMarkersRef    = useRef<Map<string, google.maps.Marker>>(new Map())
+  const nativeMarkersRef    = useRef<globalThis.Map<string, google.maps.Marker>>(new globalThis.Map())
 
   // ── Stable callback refs (avoid stale closures in listeners) ──────────────
   const onPoiClickRef       = useRef(onPoiClick)
