@@ -297,6 +297,23 @@ export function RoutePanel({
           <p className="text-gray-400 text-[11px] text-center pt-1">
             ※ ルート沿い 300m 以内の犯罪データを基に算出
           </p>
+
+          {/* Apple Maps button */}
+          {originCoords && destCoords && (
+            <button
+              onClick={() => {
+                const url = `maps://?saddr=${originCoords.lat},${originCoords.lng}&daddr=${destCoords.lat},${destCoords.lng}&dirflg=w`
+                window.open(url, '_blank')
+              }}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
+              Apple Mapsで開く
+            </button>
+          )}
         </div>
       )}
     </div>

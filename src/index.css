@@ -21,7 +21,7 @@ body {
 }
 
 /* ── Desktop: iPhone-frame prototype view ─────────────────────────────────── */
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   body {
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
     display: flex;

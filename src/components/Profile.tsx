@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 // ─── Toggle (iOS style) ───────────────────────────────────────────────────────
 
@@ -108,29 +108,42 @@ const Svg = ({ d, ...rest }: { d: string; [k: string]: unknown }) => (
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function ProfilePage() {
-  const [highContrast, setHighContrast] = useState(false)
-  const [darkMode, setDarkMode]         = useState(false)
+  const [highContrast, setHighContrast] = useState(() => {
+    return localStorage.getItem('hr_highContrast') === 'true'
+  })
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem('hr_darkMode') === 'true'
+  })
+
+  useEffect(() => {
+    localStorage.setItem('hr_highContrast', String(highContrast))
+  }, [highContrast])
+
+  useEffect(() => {
+    localStorage.setItem('hr_darkMode', String(darkMode))
+    document.documentElement.classList.toggle('dark', darkMode)
+  }, [darkMode])
 
   return (
     <div className="flex flex-col h-full bg-gray-100 overflow-y-auto">
       {/* ── Navigation title ── */}
       <div className="px-4 pt-14 pb-4">
-        <h1 className="text-[28px] font-bold text-gray-900 text-center">プロフィール</h1>
+        <h1 className="text-[28px] font-bold text-gray-900 text-center">設定</h1>
       </div>
 
-      {/* ── User card ── */}
+      {/* ── App branding card ── */}
       <div className="bg-white mx-4 rounded-2xl p-5 mb-6 flex flex-col items-center shadow-sm">
-        <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center mb-3">
+        <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-3" style={{ background: 'linear-gradient(135deg, #4ade80 0%, #1D6B4F 100%)' }}>
           <svg
-            width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"
+            width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white"
+            strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
           >
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+            <circle cx="12" cy="10" r="3" fill="white" />
           </svg>
         </div>
-        <p className="text-lg font-bold text-gray-900">Yuki Tanaka</p>
-        <p className="text-sm text-gray-400 mt-0.5">yuki.tanaka@example.com</p>
+        <p className="text-lg font-bold text-gray-900">Her Route</p>
+        <p className="text-sm text-gray-400 mt-0.5">安全なルートをナビゲート</p>
       </div>
 
       {/* ── Settings sections ── */}
@@ -204,6 +217,16 @@ export function ProfilePage() {
               </svg>
             }
             label="利用規約"
+          />
+          <ArrowRow
+            icon={
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            }
+            label="バージョン 1.0.0"
           />
         </SettingsSection>
       </div>
