@@ -1,23 +1,4 @@
-import { useEffect, useState } from 'react'
-
-// ─── Toggle (iOS style) ───────────────────────────────────────────────────────
-
-function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <button
-      onClick={() => onChange(!value)}
-      className={`relative w-[51px] h-[31px] rounded-full transition-colors duration-200 focus:outline-none flex-shrink-0 ${
-        value ? 'bg-brand-500' : 'bg-gray-300'
-      }`}
-    >
-      <span
-        className={`absolute top-[2px] left-[2px] w-[27px] h-[27px] bg-white rounded-full shadow-md transition-transform duration-200 ${
-          value ? 'translate-x-5' : 'translate-x-0'
-        }`}
-      />
-    </button>
-  )
-}
+import { useState } from 'react'
 
 // ─── Row types ────────────────────────────────────────────────────────────────
 
@@ -46,33 +27,6 @@ function ArrowRow({
         <polyline points="9 18 15 12 9 6" />
       </svg>
     </button>
-  )
-}
-
-function ToggleRow({
-  icon,
-  iconBg,
-  label,
-  value,
-  onChange,
-}: {
-  icon: React.ReactNode
-  iconBg?: string
-  label: string
-  value: boolean
-  onChange: (v: boolean) => void
-}) {
-  return (
-    <div className="flex items-center px-4 py-3.5">
-      <div
-        className="w-7 h-7 rounded-lg flex items-center justify-center text-white mr-3 flex-shrink-0"
-        style={{ background: iconBg ?? 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)' }}
-      >
-        {icon}
-      </div>
-      <span className="flex-1 text-gray-900 text-[15px]">{label}</span>
-      <Toggle value={value} onChange={onChange} />
-    </div>
   )
 }
 
@@ -105,24 +59,110 @@ const Svg = ({ d, ...rest }: { d: string; [k: string]: unknown }) => (
   </svg>
 )
 
+// ─── Back header ─────────────────────────────────────────────────────────────
+
+function SubPageHeader({ title, onBack }: { title: string; onBack: () => void }) {
+  return (
+    <div className="flex items-center px-4 pt-14 pb-4">
+      <button onClick={onBack} className="mr-3 text-brand-500 flex items-center gap-1">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+        <span className="text-[15px]">戻る</span>
+      </button>
+      <h1 className="flex-1 text-center text-[17px] font-semibold text-gray-900 pr-12">{title}</h1>
+    </div>
+  )
+}
+
+// ─── Help page ────────────────────────────────────────────────────────────────
+
+function HelpPage({ onBack }: { onBack: () => void }) {
+  const items = [
+    {
+      title: 'ルートを検索するには',
+      body: 'マップ画面下部のルート探索パネルから出発地と目的地を入力してください。犯罪データを基に安全度の高いルートが自動で選択されます。',
+    },
+    {
+      title: 'ピンで場所を指定するには',
+      body: '入力欄右のピンボタンをタップしてから地図上をタップすると、その地点を出発地・目的地として設定できます。',
+    },
+    {
+      title: 'ブックマークを保存するには',
+      body: '地図上の場所カードに表示されるブックマークボタンをタップすると、その地点をブックマークに保存できます。',
+    },
+    {
+      title: 'Apple Mapsで開くには',
+      body: 'ルート検索結果の下に表示される「Apple Mapsで開く」ボタンをタップすると、同じルートをApple Mapsで確認できます。',
+    },
+    {
+      title: '犯罪データについて',
+      body: '表示される犯罪データはシアトル市のオープンデータを使用しています。リアルタイムデータではないため、参考情報としてご利用ください。',
+    },
+  ]
+
+  return (
+    <div className="flex flex-col h-full bg-gray-100 overflow-y-auto">
+      <SubPageHeader title="ヘルプ" onBack={onBack} />
+      <div className="px-4 pb-8 space-y-3">
+        {items.map((item) => (
+          <div key={item.title} className="bg-white rounded-2xl p-4 shadow-sm">
+            <p className="text-gray-900 text-[14px] font-semibold mb-1.5">{item.title}</p>
+            <p className="text-gray-500 text-[13px] leading-relaxed">{item.body}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Terms page ───────────────────────────────────────────────────────────────
+
+function TermsPage({ onBack }: { onBack: () => void }) {
+  const sections = [
+    {
+      title: '免責事項',
+      body: '本アプリが提供するルートおよび安全度情報はあくまで参考情報です。実際の安全性を保証するものではありません。利用者自身の判断と責任のもとでご利用ください。',
+    },
+    {
+      title: 'データの利用について',
+      body: '犯罪データはシアトル市が公開するオープンデータ（Seattle Open Data）を使用しています。データの正確性・完全性について当アプリは責任を負いません。',
+    },
+    {
+      title: '位置情報の取り扱い',
+      body: '本アプリは位置情報をルート検索にのみ使用します。位置情報を外部サーバーに送信・保存することはありません。',
+    },
+    {
+      title: 'サービスの変更・終了',
+      body: '本アプリのサービス内容は予告なく変更・終了する場合があります。あらかじめご了承ください。',
+    },
+  ]
+
+  return (
+    <div className="flex flex-col h-full bg-gray-100 overflow-y-auto">
+      <SubPageHeader title="利用規約" onBack={onBack} />
+      <div className="px-4 pb-8 space-y-3">
+        {sections.map((s) => (
+          <div key={s.title} className="bg-white rounded-2xl p-4 shadow-sm">
+            <p className="text-gray-900 text-[14px] font-semibold mb-1.5">{s.title}</p>
+            <p className="text-gray-500 text-[13px] leading-relaxed">{s.body}</p>
+          </div>
+        ))}
+        <p className="text-gray-400 text-[11px] text-center pt-2">最終更新日: 2026年5月</p>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function ProfilePage() {
-  const [highContrast, setHighContrast] = useState(() => {
-    return localStorage.getItem('hr_highContrast') === 'true'
-  })
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem('hr_darkMode') === 'true'
-  })
+type SubPage = 'main' | 'help' | 'terms'
 
-  useEffect(() => {
-    localStorage.setItem('hr_highContrast', String(highContrast))
-  }, [highContrast])
+export function ProfilePage({ onNavigateToBookmark }: { onNavigateToBookmark: () => void }) {
+  const [subPage, setSubPage] = useState<SubPage>('main')
 
-  useEffect(() => {
-    localStorage.setItem('hr_darkMode', String(darkMode))
-    document.documentElement.classList.toggle('dark', darkMode)
-  }, [darkMode])
+  if (subPage === 'help')  return <HelpPage  onBack={() => setSubPage('main')} />
+  if (subPage === 'terms') return <TermsPage onBack={() => setSubPage('main')} />
 
   return (
     <div className="flex flex-col h-full bg-gray-100 overflow-y-auto">
@@ -153,6 +193,7 @@ export function ProfilePage() {
           <ArrowRow
             icon={<Svg d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />}
             label="保存済みルート"
+            onPress={onNavigateToBookmark}
           />
           <ArrowRow
             icon={
@@ -162,6 +203,7 @@ export function ProfilePage() {
               </svg>
             }
             label="ブックマーク地点"
+            onPress={onNavigateToBookmark}
           />
           <ArrowRow
             icon={
@@ -171,29 +213,6 @@ export function ProfilePage() {
               </svg>
             }
             label="通知設定"
-          />
-        </SettingsSection>
-
-        {/* 表示設定 */}
-        <SettingsSection label="表示設定">
-          <ToggleRow
-            icon={
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="4" />
-                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
-              </svg>
-            }
-            iconBg="linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
-            label="ハイコントラストモード"
-            value={highContrast}
-            onChange={setHighContrast}
-          />
-          <ToggleRow
-            icon={<Svg d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />}
-            iconBg="linear-gradient(135deg, #6366f1 0%, #4338ca 100%)"
-            label="ダークモード"
-            value={darkMode}
-            onChange={setDarkMode}
           />
         </SettingsSection>
 
@@ -208,6 +227,7 @@ export function ProfilePage() {
               </svg>
             }
             label="ヘルプ"
+            onPress={() => setSubPage('help')}
           />
           <ArrowRow
             icon={
@@ -217,6 +237,7 @@ export function ProfilePage() {
               </svg>
             }
             label="利用規約"
+            onPress={() => setSubPage('terms')}
           />
           <ArrowRow
             icon={

@@ -134,7 +134,7 @@ export default function App() {
           />
         )}
         {activeTab === 'bookmark' && <BookmarkScreen bookmarks={bookmarks} onRemove={removeBookmark} />}
-        {activeTab === 'profile'  && <ProfilePage />}
+        {activeTab === 'profile'  && <ProfilePage onNavigateToBookmark={() => setActiveTab('bookmark')} />}
       </div>
 
       {/* ── Bottom navigation ── */}
